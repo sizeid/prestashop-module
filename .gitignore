@@ -1,0 +1,7 @@
+vendor
+log
+size*.zip
+build-revision
+temp
+.idea
+config*xml

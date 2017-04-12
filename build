@@ -1,0 +1,24 @@
+#!/bin/bash
+
+dir=`dirname $0`
+(
+  cd $dir
+  revision=`git rev-parse HEAD`
+  version=`git describe --abbrev=0 --tags`
+  zipname="sizeid-$version.zip"
+  temp=temp
+
+  if [[ ! -d "$temp" ]]; then
+    mkdir "$temp"
+  fi
+
+  build="$temp/sizeid"
+  rm -rf "$build"
+
+  composer install
+  rsync -a .  "$build" --exclude 'composer.*' --exclude '.git' --exclude ".idea" --exclude "build" --exclude "readme.md" --exclude "temp"
+  echo "$revision" > "$build/build-revision"
+  echo "$version" > "$build/build-version"
+  cd temp
+  zip -r "$zipname" "sizeid"
+)

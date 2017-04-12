@@ -1,0 +1,6 @@
+.sizeid-button-wrap {
+  margin: 10px 20px;
+}
+.sizeid-button-wrap.moved{
+  margin: 10px 0;
+}
