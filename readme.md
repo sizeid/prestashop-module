@@ -1,6 +1,6 @@
 # SizeID Advisor Prestashop module
 
-[SizeID Advisor](http://demo.sizeid.com/advisor.products/) module for [Prestashop](https://www.prestashop.com/) eshop platform. Tested prestashop versions: 1.6.1.11. 
+[SizeID Advisor](http://demo.sizeid.com/advisor.products/) module for [Prestashop](https://www.prestashop.com/) eshop platform. Tested Prestashop versions: 1.6.1.11. 
 
 
 ## Download
@@ -15,6 +15,7 @@ composer create-project sizeid/prestahop-module
 or
 ```
 git clone https://github.com/sizeid/prestashop-module
+composer install
 ```
 
 ## Build
