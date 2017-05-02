@@ -10,6 +10,6 @@
     }
   ],
   "require": {
-    "sizeid/helpers": "^1.0"
+    "sizeid/helpers": "^1.1"
   }
 }
