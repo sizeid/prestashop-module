@@ -13,7 +13,7 @@ class Database
 		return Db::getInstance()->getRow(self::replaceVariables($sql, $variables));
 	}
 
-	private static function replaceVariables($sql, $params)
+	public static function replaceVariables($sql, $params)
 	{
 		$db = Db::getInstance();
 		foreach ($params as $name => $value) {

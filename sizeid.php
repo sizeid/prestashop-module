@@ -8,8 +8,10 @@ class SizeID extends Module
 	const SIZEID_IDENTITY_KEY = 'SIZEID_IDENTITY_KEY';
 	const SIZEID_API_SECURE_KEY = 'SIZEID_API_SECURE_KEY';
 	const SIZEID_BUTTON_TEMPLATE = 'SIZEID_BUTTON_TEMPLATE';
+	const SIZEID_IMPORT_FILE = 'SIZEID_IMPORT_FILE';
 	const SUBMIT_CREDENTIALS = 'credentials';
 	const SUBMIT_CONFIGURATION = 'configuration';
+	const SUBMIT_IMPORT = 'import';
 
 	public function __construct()
 	{
@@ -22,7 +24,9 @@ class SizeID extends Module
 		$this->bootstrap = TRUE;
 		parent::__construct();
 		$this->displayName = $this->l('SizeID');
-		$this->description = $this->l('Add SizeID Advisor to your Clothing and Footwear offer and give your customers an opportunity to easily find out proper size to order. You will gain more orders, less returns and you will not have to deal with customers queries concerning choosing right size.');
+		$this->description = $this->l(
+			'Add SizeID Advisor to your Clothing and Footwear offer and give your customers an opportunity to easily find out proper size to order. You will gain more orders, less returns and you will not have to deal with customers queries concerning choosing right size.'
+		);
 		$this->confirmUninstall = $this->l('Are you sure you want to uninstall?');
 		if (!$this->getIdentityKey() || !$this->getApiSecureKey()) {
 			$this->warning = $this->l('Identity Key and API Secure key is required.');
@@ -60,8 +64,8 @@ class SizeID extends Module
 	{
 		$sizeChartId = $this->loadSizeChartId();
 		if ($sizeChartId) {
-			$this->context->controller->addJS($this->_path.'views/js/button.js');
-			$this->context->controller->addCSS($this->_path.'views/css/button.css');
+			$this->context->controller->addJS($this->_path . 'views/js/button.js');
+			$this->context->controller->addCSS($this->_path . 'views/css/button.css');
 			$button = $this->getButton();
 			$button
 				->setLanguage($this->context->language->iso_code)
@@ -128,9 +132,18 @@ class SizeID extends Module
 			Configuration::updateValue(self::SIZEID_BUTTON_TEMPLATE, serialize($button->getTemplate()));
 			$html .= $this->displayConfirmation($this->l('Configuration updated.'));
 		}
+		if (Tools::isSubmit(self::SUBMIT_IMPORT)) {
+			try {
+				$importCount = $this->processImportForm(Tools::fileAttachment(self::SIZEID_IMPORT_FILE, FALSE));
+				$html .= $this->displayConfirmation($this->l('Import success.  Imported object count:') . ' ' . $importCount);
+			} catch (SizeIDInvalidInputException $ex) {
+				$html .= $this->displayError($this->l($ex->getMessage()));
+			}
+		}
 		$html .= $this->generateCredentialsForm();
 		if ($this->getSizeIDHelper()->credentialsAreValid()) {
 			$html .= $this->generateConfigurationForm();
+			$html .= $this->generateImportForm();
 		}
 		return $html;
 	}
@@ -147,7 +160,9 @@ class SizeID extends Module
 					'type' => 'select',
 					'name' => self::SIZEID_BUTTON_TEMPLATE,
 					'label' => $this->l('Button template'),
-					'desc' => $this->l('In SizeID for Business interface you can easily create and predefine your own custom style buttons to fit the best your e-shop‘s appearance. Select one of predefined button styles here.'),
+					'desc' => $this->l(
+						'In SizeID for Business interface you can easily create and predefine your own custom style buttons to fit the best your e-shop‘s appearance. Select one of predefined button styles here.'
+					),
 					'options' => [
 						'query' => $this->getSizeIDHelper()->getButtons(),
 						'id' => 'id',
@@ -195,6 +210,74 @@ class SizeID extends Module
 		$helper->fields_value[self::SIZEID_API_SECURE_KEY] = $this->getApiSecureKey();
 		$helper->submit_action = self::SUBMIT_CREDENTIALS;
 		return $helper->generateForm($fields_form);
+	}
+
+	private function generateImportForm()
+	{
+		$fields_form[0]['form'] = [
+			'legend' => [
+				'title' => $this->l('Import'),
+				'icon' => 'icon-file',
+			],
+			'input' => [
+				[
+					'type' => 'file',
+					'label' => $this->l('Csv'),
+					'name' => self::SIZEID_IMPORT_FILE,
+					'required' => TRUE,
+				],
+			],
+			'submit' => [
+				'title' => $this->l('Save'),
+			],
+		];
+		$helper = $this->createFormHelper();
+		$helper->submit_action = self::SUBMIT_IMPORT;
+		return $helper->generateForm($fields_form);
+	}
+
+	private function processImportForm($file)
+	{
+		if ($file['mime'] !== 'text/csv') {
+			throw new SizeIDInvalidInputException('Invalid file format. CSV expected.');
+		}
+		$csv = $this->readCsv($file['tmp_name']);
+		if (count($csv[0]) < 2) {
+			throw new SizeIDInvalidInputException('Invalid CSV header length.');
+		}
+		if ($csv[0][0] !== 'id_product' || $csv[0][1] !== 'size_chart_id') {
+			throw new SizeIDInvalidInputException('Invalid header format. Expected header: id_product, size_chart_id');
+		}
+		unset($csv[0]);
+		if (count($csv) < 1) {
+			throw new SizeIDInvalidInputException('Empty csv provided.');
+		}
+		$sql = [];
+		foreach ($csv as $line) {
+			$sql[] = Database::replaceVariables(
+				"INSERT INTO `:table_name` (`id_product`, `size_chart_id`) values(:id_product, :size_chart_id) ON DUPLICATE KEY UPDATE size_chart_id = :size_chart_id",
+				[
+					'table_name' => Database::getTableName(),
+					'id_product' => $line[0],
+					'size_chart_id' => $line[1],
+				]
+			);
+		}
+		$rv = Database::execute(implode(";", $sql));
+		if ($rv === FALSE) {
+			throw new SizeIDInvalidInputException('Unexpected error occurred during data import.');
+		}
+		return count($line);
+	}
+
+	private function readCsv($filename)
+	{
+		return array_map(
+			function ($line) {
+				return array_map('trim', str_getcsv($line));
+			},
+			explode(PHP_EOL, trim(file_get_contents($filename)))
+		);
 	}
 
 	/**
@@ -276,4 +359,9 @@ class SizeID extends Module
 			return $result['size_chart_id'];
 		}
 	}
+}
+
+class SizeIDInvalidInputException extends \Exception
+{
+
 }
