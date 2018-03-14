@@ -211,9 +211,7 @@ class SizeID extends Module
 					'type' => 'select',
 					'name' => self::SIZEID_BUTTON_TEMPLATE,
 					'label' => $this->l('Button template'),
-					'desc' => $this->l(
-						'In SizeID for Business interface you can easily create and predefine your own custom style buttons to fit the best your e-shop‘s appearance. Select one of predefined button styles here.'
-					),
+					'desc' => $this->l('In SizeID for Business interface you can easily create and predefine your own custom style buttons to fit the best your e-shop‘s appearance. Select one of predefined button styles here.'),
 					'options' => [
 						'query' => $this->getSizeIDHelper()->getButtons(),
 						'id' => 'id',
@@ -312,9 +310,8 @@ class SizeID extends Module
 					'type' => 'file',
 					'label' => $this->l('CSV'),
 					'name' => self::SIZEID_IMPORT_FILE,
-					'desc' => $this->l(
-						"Import matched size charts. Csv in the same format as export. CSV parameters: encoding=UTF-8, delimiter=comma, enclosure=double quotes, escape=backslash"
-					),
+					// Do not wrap this function, it will break translation export.
+					'desc' => $this->l('Import size charts matching. CSV in the same format as export. CSV style: encoding=UTF-8, delimiter=comma, enclosure=double quotes, escape=backslash, newline=LF'),
 					'required' => true,
 				],
 			],
