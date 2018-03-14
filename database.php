@@ -3,12 +3,17 @@
 class Database
 {
 
-	public static function execute($sql, $variables)
+	public static function query($sql, $variables = [])
+	{
+		return Db::getInstance()->query(self::replaceVariables($sql, $variables))->fetchAll(PDO::FETCH_ASSOC);
+	}
+
+	public static function execute($sql, $variables = [])
 	{
 		return Db::getInstance()->execute(self::replaceVariables($sql, $variables));
 	}
 
-	public static function getRow($sql, $variables)
+	public static function getRow($sql, $variables = [])
 	{
 		return Db::getInstance()->getRow(self::replaceVariables($sql, $variables));
 	}
@@ -42,7 +47,7 @@ class Database
 		return self::prefixTable('product_sizeid');
 	}
 
-	private static function prefixTable($name)
+	public static function prefixTable($name)
 	{
 		return _DB_PREFIX_ . $name;
 	}

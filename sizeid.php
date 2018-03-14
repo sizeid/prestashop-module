@@ -9,9 +9,11 @@ class SizeID extends Module
 	const SIZEID_API_SECURE_KEY = 'SIZEID_API_SECURE_KEY';
 	const SIZEID_BUTTON_TEMPLATE = 'SIZEID_BUTTON_TEMPLATE';
 	const SIZEID_IMPORT_FILE = 'SIZEID_IMPORT_FILE';
+	const SIZEID_EXPORT_FILE = 'SIZEID_EXPORT_FILE';
 	const SUBMIT_CREDENTIALS = 'credentials';
 	const SUBMIT_CONFIGURATION = 'configuration';
 	const SUBMIT_IMPORT = 'import';
+	const SUBMIT_EXPORT = 'export';
 
 	public function __construct()
 	{
@@ -132,10 +134,15 @@ class SizeID extends Module
 			Configuration::updateValue(self::SIZEID_BUTTON_TEMPLATE, serialize($button->getTemplate()));
 			$html .= $this->displayConfirmation($this->l('Configuration updated.'));
 		}
+		if (Tools::isSubmit(self::SUBMIT_EXPORT)) {
+			$this->createExport();
+		}
 		if (Tools::isSubmit(self::SUBMIT_IMPORT)) {
 			try {
 				$importCount = $this->processImportForm(Tools::fileAttachment(self::SIZEID_IMPORT_FILE, FALSE));
-				$html .= $this->displayConfirmation($this->l('Import success.  Imported object count:') . ' ' . $importCount);
+				$html .= $this->displayConfirmation(
+					$this->l('Import success.  Imported object count:') . ' ' . $importCount
+				);
 			} catch (SizeIDInvalidInputException $ex) {
 				$html .= $this->displayError($this->l($ex->getMessage()));
 			}
@@ -143,9 +150,53 @@ class SizeID extends Module
 		$html .= $this->generateCredentialsForm();
 		if ($this->getSizeIDHelper()->credentialsAreValid()) {
 			$html .= $this->generateConfigurationForm();
+			$html .= $this->generateExportForm();
 			$html .= $this->generateImportForm();
 		}
 		return $html;
+	}
+
+	private function createExport()
+	{
+		$this->createAndDownloadCsv($this->getExportData());
+	}
+
+	private function getExportData()
+	{
+		return Database::query(
+			'
+				SELECT :p_product.id_product as id_product, size_chart_id as size_chart_id, :p_product_lang.name as product_name, :p_category_lang.name as category
+				FROM :p_product
+				LEFT JOIN :p_product_sizeid 
+				ON :p_product.id_product = :p_product_sizeid.id_product
+				LEFT JOIN :p_product_lang 
+				ON :p_product.id_product = :p_product_lang.id_product
+				LEFT JOIN :p_category_lang
+				ON :p_product.id_category_default = :p_category_lang.id_category
+				WHERE :p_product_lang.id_lang = :id_lang
+				AND :p_category_lang.id_lang = :id_lang
+			',
+			[
+				'p_' => _DB_PREFIX_,
+				'id_lang' => Configuration::get('PS_LANG_DEFAULT'),
+			]
+		);
+	}
+
+	private function createAndDownloadCsv($csvLines)
+	{
+		$f = fopen('php://memory', 'w');
+		if (isset($csvLines[0])) {
+			fputcsv($f, array_keys($csvLines[0]));
+		}
+		foreach ($csvLines as $line) {
+			fputcsv($f, $line);
+		}
+		fseek($f, 0);
+		header('Content-Type: application/csv');
+		header('Content-Disposition: attachment; filename="sizeid-export.csv";');
+		fpassthru($f);
+		exit(0);
 	}
 
 	private function generateConfigurationForm()
@@ -212,6 +263,43 @@ class SizeID extends Module
 		return $helper->generateForm($fields_form);
 	}
 
+	private function generateExportForm()
+	{
+		$fields_form[0]['form'] = [
+			'legend' => [
+				'title' => $this->l('Export'),
+				'icon' => 'icon-file',
+			],
+			'input' => [
+				[
+					'type' => 'select',
+					'name' => self::SIZEID_EXPORT_FILE,
+					'label' => $this->l('Filters'),
+					'required' => true,
+					'desc' => $this->l('Export products for SizeID size charts matching.'),
+					'options' => [
+						'query' => [
+							 [
+								'id' => 'all',
+								'name' => $this->l('All products'),
+							],
+						],
+						'id' => 'id',
+						'name' => 'name',
+					],
+				],
+			],
+			'submit' => [
+				'title' => $this->l('Export CSV'),
+			],
+		];
+
+		$helper = $this->createFormHelper();
+		$helper->fields_value[self::SIZEID_EXPORT_FILE] = 'all';
+		$helper->submit_action = self::SUBMIT_EXPORT;
+		return $helper->generateForm($fields_form);
+	}
+
 	private function generateImportForm()
 	{
 		$fields_form[0]['form'] = [
@@ -222,13 +310,16 @@ class SizeID extends Module
 			'input' => [
 				[
 					'type' => 'file',
-					'label' => $this->l('Csv'),
+					'label' => $this->l('CSV'),
 					'name' => self::SIZEID_IMPORT_FILE,
-					'required' => TRUE,
+					'desc' => $this->l(
+						"Import matched size charts. Csv in the same format as export. CSV parameters: encoding=UTF-8, delimiter=comma, enclosure=double quotes, escape=backslash"
+					),
+					'required' => true,
 				],
 			],
 			'submit' => [
-				'title' => $this->l('Save'),
+				'title' => $this->l('Import CSV'),
 			],
 		];
 		$helper = $this->createFormHelper();
@@ -267,7 +358,7 @@ class SizeID extends Module
 		if ($rv === FALSE) {
 			throw new SizeIDInvalidInputException('Unexpected error occurred during data import.');
 		}
-		return count($line);
+		return count($csv);
 	}
 
 	private function readCsv($filename)
