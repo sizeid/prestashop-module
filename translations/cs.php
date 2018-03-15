@@ -10,6 +10,7 @@ $_MODULE['<{sizeid}prestashop>sizeid_9c76b63459c6433035e02d9258345580'] = 'Pří
 $_MODULE['<{sizeid}prestashop>sizeid_cb25315c4c0f2b2411295baf7afefd15'] = 'Neplatné přístupové údaje.';
 $_MODULE['<{sizeid}prestashop>sizeid_6c58031e7824c3cd6febc2f2107b0652'] = 'Nastavení upraveno';
 $_MODULE['<{sizeid}prestashop>sizeid_d07ca6c00a23f820d578911f1c87c0fa'] = 'Import proběhl úspěšně. Počet importovaných objektů: ';
+$_MODULE['<{sizeid}prestashop>sizeid_5673b885783f6520a0a029c38d1136a2'] = 'Některé objeky nebyly importovány.';
 $_MODULE['<{sizeid}prestashop>sizeid_254f642527b45bc260048e30704edb39'] = 'Nastavení';
 $_MODULE['<{sizeid}prestashop>sizeid_39c5b29a0c560c1e85847ddbbfeabbb3'] = 'Vzhled tlačítka';
 $_MODULE['<{sizeid}prestashop>sizeid_c6d4e875fe6cc555af61300f59a08407'] = 'V rozhraní SizeID for Business v sekci SizeID Advisor si můžete vytvořit vlastní vzhled tlačítka SizeID tak, aby vám zapadl do vzhledu Vašeho e-shopu. Zde pak vyberte požadovaný vzhled.';

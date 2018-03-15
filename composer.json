@@ -1,8 +1,11 @@
 {
   "name": "sizeid/prestashop-module",
-  "description": "Package for communication with SizeID Business API.",
+  "description": "SizeID Advisor module for Prestashop platform.",
   "license": "MIT",
   "authors": [
+    {
+      "name": "SizeID s.r.o."
+    },
     {
       "name": "Jakub Filla",
       "email": "jakub.filla@wavevision.cz",
