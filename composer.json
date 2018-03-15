@@ -14,5 +14,9 @@
   ],
   "require": {
     "sizeid/helpers": "^1.1"
+  },
+  "require-dev": {
+    "nette/tester": "^1.7",
+    "mockery/mockery": "^1.0"
   }
 }
