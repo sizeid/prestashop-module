@@ -60,7 +60,7 @@ class Database
 		return self::executeSql('DROP TABLE `' . self::getTableName() . '`');
 	}
 
-	private function executeSql($sql)
+	private static function executeSql($sql)
 	{
 		return Db::getInstance()->execute($sql);
 	}
