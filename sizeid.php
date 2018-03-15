@@ -163,23 +163,38 @@ class SizeID extends Module
 
 	private function getExportData()
 	{
-		return Database::query(
+		$lang = Configuration::get('PS_LANG_DEFAULT');
+		$products = Database::query(
 			'
-				SELECT :p_product.id_product as id_product, size_chart_id as size_chart_id, :p_product_lang.name as product_name, :p_category_lang.name as category
+				SELECT :p_product.id_product as id_product, size_chart_id as size_chart_id, :p_product_lang.name as product_name
 				FROM :p_product
 				LEFT JOIN :p_product_sizeid 
 				ON :p_product.id_product = :p_product_sizeid.id_product
 				LEFT JOIN :p_product_lang 
 				ON :p_product.id_product = :p_product_lang.id_product
-				LEFT JOIN :p_category_lang
-				ON :p_product.id_category_default = :p_category_lang.id_category
-				WHERE :p_product_lang.id_lang = :id_lang
-				AND :p_category_lang.id_lang = :id_lang
-			',
+				',
 			[
 				'p_' => _DB_PREFIX_,
 				'id_lang' => Configuration::get('PS_LANG_DEFAULT'),
 			]
+		);
+		foreach ($products as &$product) {
+			$categories = Product::getProductCategoriesFull($product['id_product'], $lang);
+			$product['category'] = $this->flattenCategories($categories);
+		}
+		return $products;
+	}
+
+	private function flattenCategories($categories)
+	{
+		return implode(
+			' > ',
+			array_map(
+				function ($category) {
+					return $category['name'];
+				},
+				$categories
+			)
 		);
 	}
 
@@ -273,11 +288,11 @@ class SizeID extends Module
 					'type' => 'select',
 					'name' => self::SIZEID_EXPORT_FILE,
 					'label' => $this->l('Filters'),
-					'required' => true,
+					'required' => TRUE,
 					'desc' => $this->l('Export products for SizeID size charts matching.'),
 					'options' => [
 						'query' => [
-							 [
+							[
 								'id' => 'all',
 								'name' => $this->l('All products'),
 							],
@@ -291,7 +306,6 @@ class SizeID extends Module
 				'title' => $this->l('Export CSV'),
 			],
 		];
-
 		$helper = $this->createFormHelper();
 		$helper->fields_value[self::SIZEID_EXPORT_FILE] = 'all';
 		$helper->submit_action = self::SUBMIT_EXPORT;
@@ -311,8 +325,10 @@ class SizeID extends Module
 					'label' => $this->l('CSV'),
 					'name' => self::SIZEID_IMPORT_FILE,
 					// Do not wrap this function, it will break translation export.
-					'desc' => $this->l('Import size charts matching. CSV in the same format as export. CSV style: encoding=UTF-8, delimiter=comma, enclosure=double quotes, escape=backslash, newline=LF'),
-					'required' => true,
+					'desc' => $this->l(
+						'Import size charts matching. CSV in the same format as export. CSV style: encoding=UTF-8, delimiter=comma, enclosure=double quotes, escape=backslash, newline=LF'
+					),
+					'required' => TRUE,
 				],
 			],
 			'submit' => [
