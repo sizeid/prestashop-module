@@ -325,9 +325,7 @@ class SizeID extends Module
 					'label' => $this->l('CSV'),
 					'name' => self::SIZEID_IMPORT_FILE,
 					// Do not wrap this function, it will break translation export.
-					'desc' => $this->l(
-						'Import size charts matching. CSV in the same format as export. CSV style: encoding=UTF-8, delimiter=comma, enclosure=double quotes, escape=backslash, newline=LF'
-					),
+					'desc' => $this->l('Import size charts matching. CSV in the same format as export. CSV style: encoding=UTF-8, delimiter=comma, enclosure=double quotes, escape=backslash, newline=LF'),
 					'required' => TRUE,
 				],
 			],
