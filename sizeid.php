@@ -20,7 +20,7 @@ class SizeID extends Module
 		$this->name = 'sizeid';
 		$this->tab = 'front_office_features';
 		$this->version = trim(@file_get_contents(__DIR__ . '/build-version'));
-		$this->author = 'Jakub Filla';
+		$this->author = 'SizeID s.r.o.';
 		$this->need_instance = 1;
 		$this->ps_versions_compliancy = ['min' => '1.6', 'max' => _PS_VERSION_];
 		$this->bootstrap = TRUE;
