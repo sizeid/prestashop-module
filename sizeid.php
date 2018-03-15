@@ -139,10 +139,15 @@ class SizeID extends Module
 		}
 		if (Tools::isSubmit(self::SUBMIT_IMPORT)) {
 			try {
-				$importCount = $this->processImportForm(Tools::fileAttachment(self::SIZEID_IMPORT_FILE, FALSE));
-				$html .= $this->displayConfirmation(
-					$this->l('Import success.  Imported object count:') . ' ' . $importCount
-				);
+				list($importCount, $errors) = $this->processImportForm(Tools::fileAttachment(self::SIZEID_IMPORT_FILE, FALSE));
+				if ($importCount > 0) {
+					$html .= $this->displayConfirmation(
+						$this->l('Import success.  Imported object count:') . ' ' . $importCount
+					);
+				}
+				if (count($errors) > 0) {
+					$html .= $this->displayWarning($this->l('Some objects weren\'t imported.') . '<br>' . implode("<br>", $errors));
+				}
 			} catch (SizeIDInvalidInputException $ex) {
 				$html .= $this->displayError($this->l($ex->getMessage()));
 			}
@@ -180,7 +185,7 @@ class SizeID extends Module
 		);
 		foreach ($products as &$product) {
 			$categories = Product::getProductCategoriesFull($product['id_product'], $lang);
-			$product['category'] = $this->flattenCategories($categories);
+			$product['categories'] = $this->flattenCategories($categories);
 		}
 		return $products;
 	}
@@ -354,9 +359,10 @@ class SizeID extends Module
 		if (count($csv) < 1) {
 			throw new SizeIDInvalidInputException('Empty csv provided.');
 		}
-		$sql = [];
-		foreach ($csv as $line) {
-			$sql[] = Database::replaceVariables(
+		$successCount = 0;
+		$errors = [];
+		foreach ($csv as $i => $line) {
+			$rv = Database::execute(
 				"INSERT INTO `:table_name` (`id_product`, `size_chart_id`) values(:id_product, :size_chart_id) ON DUPLICATE KEY UPDATE size_chart_id = :size_chart_id",
 				[
 					'table_name' => Database::getTableName(),
@@ -364,12 +370,9 @@ class SizeID extends Module
 					'size_chart_id' => $line[1],
 				]
 			);
+			$rv === FALSE ? $errors[] = sprintf('line_number=%d, line_content="%s"', $i, implode(', ', $line)) : $successCount++;
 		}
-		$rv = Database::execute(implode(";", $sql));
-		if ($rv === FALSE) {
-			throw new SizeIDInvalidInputException('Unexpected error occurred during data import.');
-		}
-		return count($csv);
+		return [$successCount, $errors];
 	}
 
 	private function readCsv($filename)
