@@ -26,9 +26,7 @@ class SizeID extends Module
 		$this->bootstrap = TRUE;
 		parent::__construct();
 		$this->displayName = $this->l('SizeID');
-		$this->description = $this->l(
-			'Add SizeID Advisor to your Clothing and Footwear offer and give your customers an opportunity to easily find out proper size to order. You will gain more orders, less returns and you will not have to deal with customers queries concerning choosing right size.'
-		);
+		$this->description = $this->l('Add SizeID Advisor to your Clothing and Footwear offer and give your customers an opportunity to easily find out proper size to order. You will gain more orders, less returns and you will not have to deal with customers queries concerning choosing right size.');
 		$this->confirmUninstall = $this->l('Are you sure you want to uninstall?');
 		if (!$this->getIdentityKey() || !$this->getApiSecureKey()) {
 			$this->warning = $this->l('Identity Key and API Secure key is required.');
