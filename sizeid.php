@@ -343,9 +343,6 @@ class SizeID extends Module
 
 	private function processImportForm($file)
 	{
-		if ($file['mime'] !== 'text/csv') {
-			throw new SizeIDInvalidInputException('Invalid file format. CSV expected.');
-		}
 		$csv = $this->readCsv($file['tmp_name']);
 		if (count($csv[0]) < 2) {
 			throw new SizeIDInvalidInputException('Invalid CSV header length.');
