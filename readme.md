@@ -1,6 +1,6 @@
 # SizeID Advisor Prestashop module
 
-[SizeID Advisor](http://demo.sizeid.com/advisor.products/) module for [Prestashop](https://www.prestashop.com/) eshop platform. Tested Prestashop versions: 1.6.1.4, 1.6.1.11. 
+[SizeID Advisor](http://demo.sizeid.com/advisor.products/) module for [Prestashop](https://www.prestashop.com/) eshop platform. Tested Prestashop versions: 1.6.1.4, 1.6.1.5, 1.6.1.11. 
 
 ## Documentation
 

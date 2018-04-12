@@ -357,15 +357,30 @@ class SizeID extends Module
 		$successCount = 0;
 		$errors = [];
 		foreach ($csv as $i => $line) {
-			$rv = Database::execute(
-				"INSERT INTO `:table_name` (`id_product`, `size_chart_id`) values(:id_product, :size_chart_id) ON DUPLICATE KEY UPDATE size_chart_id = :size_chart_id",
-				[
-					'table_name' => Database::getTableName(),
-					'id_product' => $line[0],
-					'size_chart_id' => $line[1],
-				]
-			);
-			$rv === FALSE ? $errors[] = sprintf('line_number=%d, line_content="%s"', $i, implode(', ', $line)) : $successCount++;
+			$sizeChartId = trim($line[1]);
+			if ($sizeChartId === '') {
+				Database::execute(
+					'DELETE FROM `:table_name` WHERE id_product = :id_product',
+					[
+						'table_name' => Database::getTableName(),
+						'id_product' => $line[0],
+					]
+				);
+			} else {
+				$rv = Database::execute(
+					"INSERT INTO `:table_name` (`id_product`, `size_chart_id`) values(:id_product, :size_chart_id) ON DUPLICATE KEY UPDATE size_chart_id = :size_chart_id",
+					[
+						'table_name' => Database::getTableName(),
+						'id_product' => $line[0],
+						'size_chart_id' => $sizeChartId,
+					]
+				);
+				$rv === FALSE ? $errors[] = sprintf(
+					'line_number=%d, line_content="%s"',
+					$i,
+					implode(', ', $line)
+				) : $successCount++;
+			}
 		}
 		return [$successCount, $errors];
 	}
