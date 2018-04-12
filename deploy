@@ -1,0 +1,11 @@
+#!/bin/bash
+
+file="$1"
+name=${file##*/}
+remote=ubuntu@sizeid.com
+path=/var/www/developers/data/prestashop
+scp "$file" "$remote:$path/$name"
+ssh "$remote" "cd $path; ln -sf $name sizeid-latest.zip"
+
+echo "Available at:"
+echo "http://developers.sizeid.com/data/prestashop/sizeid-latest.zip"
